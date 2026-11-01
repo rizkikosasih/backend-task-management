@@ -2,17 +2,17 @@
 
 ![Task Management API](.github/assets/og-image.png)
 
-Sistem manajemen tugas (Task Management) berbasis RESTful API yang dibangun dengan fokus pada keamanan data (**Data Isolation**), manajemen akses yang ketat (**RBAC**), dan arsitektur kode yang bersih (**Clean Architecture**) menggunakan **Service-Repository Pattern**.
+Sistem manajemen tugas (Task Management) berbasis RESTful API yang dibangun dengan fokus pada isolasi data (**Data Isolation**), kontrol akses granular (**RBAC & ABAC**), idempotensi transaksi jaringan, dan konkurensi data menggunakan **Domain Service Layer**.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: Laravel 12
-- **Database**: MySQL
-- **Authentication**: Laravel Sanctum
-- **Authorization**: Spatie Laravel Permission
-- **Architecture**: Service-Repository Pattern
+- **Database**: SQLite (Lokal & Testing), MySQL (Produksi & Docker)
+- **Authentication**: Laravel Sanctum & Laravel Socialite (OAuth2)
+- **Authorization**: Spatie Laravel Permission & Laravel Policy
+- **Architecture**: Domain Service Layer & Eloquent ORM
 - Dev Tools:
   - Laravel Pint: Standar formatting kode dan strict typing PHP.
   - Larastan (PHPStan): Static analysis level 5.
@@ -66,7 +66,7 @@ php artisan test
 
 ---
 
-## 🚀 Fitur Utama
+## Fitur Utama
 
 ### 1. Authentication
 
@@ -238,72 +238,30 @@ GET /api/tasks?status=todo&project_id=1&assigned_to=1&search=test&page=1&per_pag
 
 ### 7. Technical Excellence
 
-- **Service-Repository Pattern**: Memisahkan logika bisnis dari akses database untuk meningkatkan _maintainability_ dan mempermudah unit testing.
-- **Policy-Driven Authorization**: Menggunakan Laravel Policy secara menyeluruh untuk menangani otorisasi yang granular.
-- **Conventional Commits**: Menggunakan standar pesan commit yang rapi untuk histori pengembangan yang profesional.
+- **Domain Service Pattern**: Memusatkan logika bisnis pada kelas service konkret yang berinteraksi langsung dengan model Eloquent tanpa lapisan abstraksi berlebih.
+- **Policy-Driven Authorization**: Menggunakan Laravel Policy secara menyeluruh untuk menangani otorisasi granular (RBAC dan ABAC).
+- **Idempotency & Concurrency**: Proteksi duplikasi mutasi melalui Idempotency Key Middleware dan pencegahan race condition status tugas melalui Pessimistic Locking.
+- **Conventional Commits**: Menggunakan standar pesan commit terstruktur untuk riwayat pengembangan profesional.
+
+---
+
+## Dokumentasi Arsitektur & Spesifikasi
+
+- [Product Requirement Document (PRD)](PRD.md)
+- [Master Architecture Decision Records (ADR)](docs/DECISION_LOG.md)
+- [Entity Relationship Diagram & Skema Database](docs/database/ERD.md)
+- [Standarisasi API & Penanganan Galat](docs/api/STANDARDIZATION.md)
+- [Kontrak API Endpoint](docs/api/contracts/)
+- [Kamus Domain Bisnis (Glossary)](docs/GLOSSARY.md)
+- [Pelacakan Masalah Teknis (Known Issues)](docs/KNOWN_ISSUES.md)
+- [Pelacakan Tugas (Tasks Backlog)](docs/TASKS.md)
+- [Aktivitas Pengembang Harian (DEV_LOG)](DEV_LOG.md)
 
 ---
 
 ## Struktur Database
 
-### users
-
-```
-id
-name
-email
-email_verified_at
-password
-remember_token
-created_at
-updated_at
-deleted_at
-```
-
----
-
-### projects
-
-```
-id
-name
-description
-created_by
-created_at
-updated_at
-deleted_at
-```
-
----
-
-### tasks
-
-```
-id
-project_id
-title
-description
-status
-assigned_to
-due_date
-created_at
-updated_at
-deleted_at
-```
-
----
-
-### comments
-
-```
-id
-task_id
-user_id
-message
-created_at
-updated_at
-deleted_at
-```
+Lihat detail lengkap spesifikasi skema, relasi kardinalitas, dan indeks B-Tree pada [docs/database/ERD.md](docs/database/ERD.md).
 
 ---
 
@@ -313,44 +271,41 @@ deleted_at
 app/
  ├── Http/
  │    ├── Controllers/
+ │    ├── Middleware/
+ │    │     └── IdempotencyMiddleware.php
  │    ├── Requests/
  │    └── Resources/
  │
  ├── Services/
  │    ├── AuthService.php
+ │    ├── OAuthService.php
  │    ├── ProjectService.php
  │    ├── TaskService.php
  │    └── CommentService.php
- │
- ├── Repositories/
- │    ├── Contracts/
- │    │     ├── ProjectRepositoryInterface.php
- │    │     ├── TaskRepositoryInterface.php
- │    │     └── CommentRepositoryInterface.php
- │    │
- │    ├── ProjectRepository.php
- │    ├── TaskRepository.php
- │    └── CommentRepository.php
  │
  ├── Models/
  │     ├── User.php
  │     ├── Project.php
  │     ├── Task.php
- │     └── Comment.php
+ │     ├── Comment.php
+ │     └── OAuthProvider.php
  │
  ├── Policies/
  │     ├── ProjectPolicy.php
  │     ├── TaskPolicy.php
  │     └── CommentPolicy.php
  │
+ ├── Events/
+ │     └── TaskAssigned.php
+ ├── Listeners/
+ │     └── SendTaskAssignedNotification.php
  ├── Enums/
  │     └── TaskStatus.php
  ├── Exceptions/
  │     ├── ApiExceptionTransformer.php
  │     └── BusinessException.php
  ├── Helpers/
- │     ├── ApiResponse.php
- │     └── DateFormatter.php
+ │     └── ApiResponse.php
  └── Providers/
 
 tests/
