@@ -68,6 +68,9 @@ temp-*/
 *.rar
 *.7z
 
+# --- DOCUMENTATION ---
+*.md
+
 # --- CUSTOM ---
 public/assets/**
 !public/assets/modules/**

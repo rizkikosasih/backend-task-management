@@ -20,7 +20,9 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        if ($user->hasRole('admin')) return true;
+        if ($user->hasRole('admin')) {
+            return true;
+        }
 
         return $user->hasPermissionTo('view project') &&
             $project->tasks()->where('assigned_to', $user->id)->exists();

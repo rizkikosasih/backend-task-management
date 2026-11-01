@@ -2,17 +2,11 @@
 
 namespace App\Http\Resources;
 
-use App\Helpers\DateFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProjectResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -25,8 +19,8 @@ class ProjectResource extends JsonResource
                     'name' => $this->user->name,
                 ];
             }),
-            'created_at' => DateFormatter::id($this->created_at),
-            'updated_at' => DateFormatter::id($this->updated_at),
+            'created_at' => $this->created_at?->locale('id')->translatedFormat('l, d F Y'),
+            'updated_at' => $this->updated_at?->locale('id')->translatedFormat('l, d F Y'),
             'tasks_count' => $this->tasks_count,
         ];
     }

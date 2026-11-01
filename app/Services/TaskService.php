@@ -2,26 +2,47 @@
 
 namespace App\Services;
 
-use App\Repositories\Contracts\TaskRepositoryInterface;
 use App\Enums\TaskStatus;
 use App\Exceptions\BusinessException;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class TaskService
 {
-    public function __construct(protected TaskRepositoryInterface $repo) {}
-
-    public function getTasks($filters): LengthAwarePaginator
+    public function getTasks(array $filters): LengthAwarePaginator
     {
         if (Gate::denies('viewAny', Task::class)) {
             throw new AuthorizationException('Access denied to task list.');
         }
 
-        return $this->repo->paginate($filters);
+        $user = Auth::user();
+
+        return Task::query()
+            ->when($user->hasRole('member'), function ($q) use ($user) {
+                return $q->where('assigned_to', $user->id);
+            })
+            ->when(
+                $filters['search'] ?? null,
+                fn($q, $search) => $q->where('title', 'like', "%{$search}%"),
+            )
+            ->when(
+                $filters['project_id'] ?? null,
+                fn($q, $projectId) => $q->where('project_id', $projectId),
+            )
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when(
+                $filters['assigned_to'] ?? null,
+                fn($q, $assignedTo) => $q->where('assigned_to', $assignedTo),
+            )
+            ->with(['project:id,name', 'user:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate($filters['per_page'] ?? 10)
+            ->withQueryString();
     }
 
     public function getById(Task $task): Task
@@ -45,7 +66,9 @@ class TaskService
             ? TaskStatus::from($data['status'])
             : TaskStatus::TODO;
 
-        return $this->repo->create($data);
+        $task = Task::create($data);
+
+        return $task->load(['project:id,name', 'user:id,name']);
     }
 
     public function update(Task $task, array $data): Task
@@ -54,7 +77,9 @@ class TaskService
             throw new AuthorizationException('Only the project owner can update task details.');
         }
 
-        return $this->repo->update($task, $data);
+        $task->update($data);
+
+        return $task->fresh(['project:id,name', 'user:id,name']);
     }
 
     public function updateStatus(Task $task, string $status): Task
@@ -78,7 +103,9 @@ class TaskService
             return $task;
         }
 
-        return $this->repo->update($task, ['status' => $newStatus]);
+        $task->update(['status' => $newStatus]);
+
+        return $task->fresh(['project:id,name', 'user:id,name']);
     }
 
     public function delete(Task $task): bool
@@ -87,6 +114,6 @@ class TaskService
             throw new AuthorizationException('Task removal is restricted to the project owner.');
         }
 
-        return $this->repo->delete($task);
+        return $task->delete();
     }
 }

@@ -43,7 +43,7 @@ class ApiExceptionTransformer
             $e instanceof BusinessException => self::jsonResponse(
                 code: $e->getCode() ?: 422,
                 message: $e->getMessage(),
-                errors: $e->getErrors()
+                errors: $e->getErrors(),
             ),
 
             default => self::handleFallback($e),

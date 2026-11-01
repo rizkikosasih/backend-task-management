@@ -2,17 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Helpers\DateFormatter;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -26,10 +21,11 @@ class TaskResource extends JsonResource
                     'name' => $this->user->name,
                 ];
             }),
-            'due_date' => DateFormatter::id($this->due_date),
-            'created_at' => DateFormatter::id($this->created_at),
-            'updated_at' => DateFormatter::id($this->updated_at),
-
+            'due_date' => $this->due_date
+                ? Carbon::parse($this->due_date)->locale('id')->translatedFormat('l, d F Y')
+                : null,
+            'created_at' => $this->created_at?->locale('id')->translatedFormat('l, d F Y'),
+            'updated_at' => $this->updated_at?->locale('id')->translatedFormat('l, d F Y'),
             'project' => $this->whenLoaded('project', function () {
                 return [
                     'id' => $this->project->id,

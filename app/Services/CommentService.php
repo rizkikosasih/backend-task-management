@@ -2,24 +2,27 @@
 
 namespace App\Services;
 
-use App\Models\Task;
 use App\Models\Comment;
-use Illuminate\Support\Facades\Auth;
-use App\Repositories\Contracts\CommentRepositoryInterface;
+use App\Models\Task;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class CommentService
 {
-    public function __construct(protected CommentRepositoryInterface $repo) {}
-
-    public function getTaskComments(Task $task): LengthAwarePaginator
+    public function getTaskComments(Task $task, int $perPage = 10): LengthAwarePaginator
     {
         if (Gate::denies('view', $task)) {
             throw new AuthorizationException('Access denied to comments for this task.');
         }
-        return $this->repo->paginateByTaskId($task);
+
+        return $task
+            ->comments()
+            ->with('user:id,name')
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate($perPage);
     }
 
     public function create(Task $task, string $message): Comment
@@ -30,11 +33,13 @@ class CommentService
             );
         }
 
-        return $this->repo->create([
+        $comment = Comment::create([
             'task_id' => $task->id,
             'user_id' => Auth::id(),
             'message' => $message,
         ]);
+
+        return $comment->load('user:id,name');
     }
 
     public function delete(Comment $comment): bool
@@ -43,6 +48,6 @@ class CommentService
             throw new AuthorizationException('You can only delete your own comments.');
         }
 
-        return $this->repo->delete($comment);
+        return $comment->delete();
     }
 }
