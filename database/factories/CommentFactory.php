@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CommentFactory extends Factory
 {

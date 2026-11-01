@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit;
 
-use App\Models\User;
 use App\Models\OAuthProvider;
+use App\Models\User;
 use App\Services\AuthService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,7 +21,7 @@ class AuthServiceOAuthTest extends TestCase
     {
         parent::setUp();
         $this->seed(RolePermissionSeeder::class);
-        $this->authService = new AuthService();
+        $this->authService = new AuthService;
     }
 
     /**

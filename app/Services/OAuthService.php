@@ -1,26 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use Exception;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 
 class OAuthService
 {
-    /**
-     * Get redirect URL for OAuth provider.
-     */
     public function getRedirectUrl(string $provider): string
     {
-        return Socialite::driver($provider)->stateless()->redirect()->getTargetUrl();
+        /** @var AbstractProvider $driver */
+        $driver = Socialite::driver($provider);
+
+        return $driver->stateless()->redirect()->getTargetUrl();
     }
 
     /**
-     * Handle OAuth callback & get user data.
+     * @return array<string, mixed>
      */
     public function handleCallback(string $provider): array
     {
         try {
-            $oauthUser = Socialite::driver($provider)->stateless()->user();
+            /** @var AbstractProvider $driver */
+            $driver = Socialite::driver($provider);
+            $oauthUser = $driver->stateless()->user();
+
+            $raw = method_exists($oauthUser, 'getRaw') ? $oauthUser->getRaw() : [];
 
             return [
                 'provider' => $provider,
@@ -30,11 +38,11 @@ class OAuthService
                 'profile_data' => [
                     'avatar' => $oauthUser->getAvatar(),
                     'nickname' => $oauthUser->getNickname(),
-                    'raw' => $oauthUser->getRaw(),
+                    'raw' => $raw,
                 ],
             ];
-        } catch (\Exception $e) {
-            throw new \Exception("OAuth authentication failed: {$e->getMessage()}");
+        } catch (Exception $e) {
+            throw new Exception("OAuth authentication failed: {$e->getMessage()}");
         }
     }
 }

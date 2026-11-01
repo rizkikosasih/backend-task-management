@@ -10,6 +10,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.3",
+    "dedoc/scramble": "^0.13.52",
     "laravel/framework": "^12.0",
     "laravel/sanctum": "^4.3",
     "laravel/socialite": "^5.28",
@@ -19,6 +20,7 @@
   "require-dev": {
     "barryvdh/laravel-ide-helper": "^3.7",
     "fakerphp/faker": "^1.23",
+    "larastan/larastan": "^3.13",
     "laravel/pail": "^1.2.2",
     "laravel/pint": "^1.13",
     "laravel/sail": "^1.41",
@@ -57,13 +59,44 @@
       "@php artisan migrate --graceful --ansi"
     ],
     "dev": [
-      "Composer\\Config::disableProcessTimeout",
-      "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+      "@php artisan serve"
     ],
-    "setup": [],
-    "test:all": [],
-    "deploy:local": [],
-    "deploy": []
+    "lint": "vendor/bin/pint --test",
+    "lint:fix": "vendor/bin/pint",
+    "analyse": "vendor/bin/phpstan analyse",
+    "test": "vendor/bin/phpunit",
+    "setup": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+      "@php artisan key:generate --ansi",
+      "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+      "@php artisan migrate --force --ansi",
+      "@php artisan storage:link --ansi",
+      "@php artisan optimize --ansi"
+    ],
+    "setup:local": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+      "@php artisan key:generate --ansi",
+      "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+      "@php artisan migrate:fresh --seed --ansi",
+      "@php artisan storage:link --ansi",
+      "@php artisan optimize:clear --ansi"
+    ],
+    "deploy": [
+      "@php artisan down",
+      "Composer\\Config::disableProcessTimeout",
+      "@composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction",
+      "@php artisan migrate --force --ansi",
+      "@php artisan optimize:clear --ansi",
+      "@php artisan optimize --ansi",
+      "@php artisan queue:restart --ansi",
+      "@php artisan up"
+    ],
+    "deploy:local": [
+      "Composer\\Config::disableProcessTimeout",
+      "@composer install --prefer-dist --no-interaction",
+      "@php artisan migrate --ansi",
+      "@php artisan optimize:clear --ansi"
+    ]
   },
   "extra": {
     "branch-alias": {

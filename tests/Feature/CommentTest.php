@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\Comment;
@@ -57,7 +59,7 @@ class CommentTest extends TestCase
         $tokenMember1 = $member1->createToken('token1')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember1,
+            'Authorization' => 'Bearer '.$tokenMember1,
         ])->getJson(route('comments.index', $task->id));
 
         $response->assertStatus(200)->assertJsonCount(1, 'data');
@@ -108,7 +110,7 @@ class CommentTest extends TestCase
         $tokenMember2 = $member2->createToken('token2')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember2,
+            'Authorization' => 'Bearer '.$tokenMember2,
         ])->getJson(route('comments.index', $task->id));
 
         $response->assertStatus(403);
@@ -145,7 +147,7 @@ class CommentTest extends TestCase
         $tokenMember1 = $member1->createToken('token1')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember1,
+            'Authorization' => 'Bearer '.$tokenMember1,
         ])->postJson(route('comments.store', $task->id), ['message' => 'My comment']);
 
         $response->assertStatus(201);
@@ -189,7 +191,7 @@ class CommentTest extends TestCase
         $tokenMember2 = $member2->createToken('token2')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember2,
+            'Authorization' => 'Bearer '.$tokenMember2,
         ])->postJson(route('comments.store', $task->id), ['message' => 'My comment']);
 
         $response->assertStatus(403);
@@ -232,7 +234,7 @@ class CommentTest extends TestCase
         $tokenMember1 = $member1->createToken('token1')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember1,
+            'Authorization' => 'Bearer '.$tokenMember1,
         ])->deleteJson(route('comments.destroy', $comment->id));
 
         $response->assertStatus(200);
@@ -275,7 +277,7 @@ class CommentTest extends TestCase
         $tokenAdmin = $admin->createToken('admin_token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenAdmin,
+            'Authorization' => 'Bearer '.$tokenAdmin,
         ])->deleteJson(route('comments.destroy', $comment->id));
 
         $response->assertStatus(403);

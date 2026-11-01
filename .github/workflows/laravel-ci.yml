@@ -3,11 +3,6 @@ name: Laravel CI
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   tests:
@@ -34,30 +29,25 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, dom, curl, libxml, mysql
+          extensions: mbstring, dom, curl, libxml, mysql, sqlite3
+          coverage: none
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
-
-      - name: Optimize Composer
-        run: composer dump-autoload
 
       - name: Prepare Laravel
         run: |
           cp .env.example .env
           php artisan key:generate
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24.15'
-          cache: npm
+      - name: Run Pint Code Style Verification
+        run: vendor/bin/pint --test
 
-      - name: Install Node Dependencies
-        run: npm install
+      - name: Run PHPStan Static Analysis
+        run: vendor/bin/phpstan analyse
 
-      - name: Run Formatter
-        run: npm run format
+      - name: Execute Tests via PHPUnit
+        run: vendor/bin/phpunit
 
       - name: Create Clean Artifact
         run: |

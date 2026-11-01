@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\Project;
@@ -64,7 +66,7 @@ class TaskTest extends TestCase
         $token1 = $member1->createToken('token1')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token1,
+            'Authorization' => 'Bearer '.$token1,
         ])->getJson(route('tasks.index'));
 
         $response->assertStatus(200)->assertJsonCount(1, 'data');
@@ -101,7 +103,7 @@ class TaskTest extends TestCase
         $tokenAdmin = $admin->createToken('admin_token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenAdmin,
+            'Authorization' => 'Bearer '.$tokenAdmin,
         ])->getJson(route('tasks.index'));
 
         $response->assertStatus(200)->assertJsonCount(1, 'data');
@@ -130,7 +132,7 @@ class TaskTest extends TestCase
         $token1 = $admin1->createToken('token1')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token1,
+            'Authorization' => 'Bearer '.$token1,
         ])->postJson(route('tasks.create'), $payload);
 
         $response->assertStatus(201);
@@ -166,7 +168,7 @@ class TaskTest extends TestCase
         $token2 = $admin2->createToken('token2')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token2,
+            'Authorization' => 'Bearer '.$token2,
         ])->postJson(route('tasks.create'), $payload);
 
         $response->assertStatus(403);
@@ -199,7 +201,7 @@ class TaskTest extends TestCase
         $token = $admin->createToken('token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->putJson(route('tasks.update', $task->id), $payload);
 
         $response->assertStatus(200);
@@ -239,7 +241,7 @@ class TaskTest extends TestCase
         $token2 = $admin2->createToken('token2')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token2,
+            'Authorization' => 'Bearer '.$token2,
         ])->putJson(route('tasks.update', $task->id), $payload);
 
         $response->assertStatus(403);
@@ -276,7 +278,7 @@ class TaskTest extends TestCase
         $tokenMember = $member->createToken('token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember,
+            'Authorization' => 'Bearer '.$tokenMember,
         ])->patchJson(route('tasks.status', $task->id), ['status' => 'in_progress']);
 
         $response->assertStatus(200);
@@ -320,7 +322,7 @@ class TaskTest extends TestCase
         $tokenMember2 = $member2->createToken('token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember2,
+            'Authorization' => 'Bearer '.$tokenMember2,
         ])->patchJson(route('tasks.status', $task->id), ['status' => 'in_progress']);
 
         $response->assertStatus(403);
@@ -349,7 +351,7 @@ class TaskTest extends TestCase
         $token = $admin->createToken('token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->patchJson(route('tasks.status', $task->id), ['status' => 'in_progress']);
 
         $response->assertStatus(422);
@@ -378,7 +380,7 @@ class TaskTest extends TestCase
         $token = $admin->createToken('token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->deleteJson(route('tasks.delete', $task->id));
 
         $response->assertStatus(200);
@@ -414,7 +416,7 @@ class TaskTest extends TestCase
         $token2 = $admin2->createToken('token2')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token2,
+            'Authorization' => 'Bearer '.$token2,
         ])->deleteJson(route('tasks.delete', $task->id));
 
         $response->assertStatus(403);

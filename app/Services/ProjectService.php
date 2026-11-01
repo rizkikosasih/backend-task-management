@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Project;
@@ -10,6 +12,9 @@ use Illuminate\Support\Facades\Gate;
 
 class ProjectService
 {
+    /**
+     * @param  array<string, mixed>  $filters
+     */
     public function getProjects(array $filters): LengthAwarePaginator
     {
         if (Gate::denies('viewAny', Project::class)) {
@@ -19,14 +24,14 @@ class ProjectService
         return Project::query()
             ->when(
                 $filters['search'] ?? null,
-                fn($q, $search) => $q->where('name', 'like', "%{$search}%"),
+                fn ($q, $search) => $q->where('name', 'like', "%{$search}%"),
             )
-            ->when($filters['created_by'] ?? null, fn($q, $user) => $q->where('created_by', $user))
+            ->when($filters['created_by'] ?? null, fn ($q, $user) => $q->where('created_by', $user))
             ->withCount('tasks')
             ->with(['user:id,name'])
             ->orderBy('created_at', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate($filters['per_page'] ?? 10)
+            ->paginate((int) ($filters['per_page'] ?? 10))
             ->withQueryString();
     }
 
@@ -39,6 +44,9 @@ class ProjectService
         return $project->load(['user:id,name'])->loadCount('tasks');
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function create(array $data): Project
     {
         if (Gate::denies('create', Project::class)) {
@@ -52,6 +60,9 @@ class ProjectService
         return $project->load(['user:id,name'])->loadCount('tasks');
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function update(Project $project, array $data): Project
     {
         if (Gate::denies('update', $project)) {
@@ -73,6 +84,6 @@ class ProjectService
             );
         }
 
-        return $project->delete();
+        return (bool) $project->delete();
     }
 }
