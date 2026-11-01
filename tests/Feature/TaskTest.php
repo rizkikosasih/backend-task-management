@@ -67,8 +67,7 @@ class TaskTest extends TestCase
             'Authorization' => 'Bearer ' . $token1,
         ])->getJson(route('tasks.index'));
 
-        $response->assertStatus(200)
-            ->assertJsonCount(1, 'data');
+        $response->assertStatus(200)->assertJsonCount(1, 'data');
     }
 
     public function test_admin_sees_all_tasks_in_list(): void
@@ -105,8 +104,7 @@ class TaskTest extends TestCase
             'Authorization' => 'Bearer ' . $tokenAdmin,
         ])->getJson(route('tasks.index'));
 
-        $response->assertStatus(200)
-            ->assertJsonCount(1, 'data');
+        $response->assertStatus(200)->assertJsonCount(1, 'data');
     }
 
     public function test_project_owner_can_create_tasks(): void

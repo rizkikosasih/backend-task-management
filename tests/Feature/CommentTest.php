@@ -60,8 +60,7 @@ class CommentTest extends TestCase
             'Authorization' => 'Bearer ' . $tokenMember1,
         ])->getJson(route('comments.index', $task->id));
 
-        $response->assertStatus(200)
-            ->assertJsonCount(1, 'data');
+        $response->assertStatus(200)->assertJsonCount(1, 'data');
     }
 
     public function test_uninvolved_member_cannot_retrieve_comments(): void

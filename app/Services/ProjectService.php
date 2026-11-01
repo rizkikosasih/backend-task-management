@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Project;
-use App\Repositories\Contracts\ProjectRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -11,15 +10,24 @@ use Illuminate\Support\Facades\Gate;
 
 class ProjectService
 {
-    public function __construct(protected ProjectRepositoryInterface $repo) {}
-
     public function getProjects(array $filters): LengthAwarePaginator
     {
         if (Gate::denies('viewAny', Project::class)) {
             throw new AuthorizationException('You do not have access to any projects.');
         }
 
-        return $this->repo->paginate($filters);
+        return Project::query()
+            ->when(
+                $filters['search'] ?? null,
+                fn($q, $search) => $q->where('name', 'like', "%{$search}%"),
+            )
+            ->when($filters['created_by'] ?? null, fn($q, $user) => $q->where('created_by', $user))
+            ->withCount('tasks')
+            ->with(['user:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate($filters['per_page'] ?? 10)
+            ->withQueryString();
     }
 
     public function getById(Project $project): Project
@@ -39,7 +47,9 @@ class ProjectService
 
         $data['created_by'] = Auth::id();
 
-        return $this->repo->create($data);
+        $project = Project::create($data);
+
+        return $project->load(['user:id,name'])->loadCount('tasks');
     }
 
     public function update(Project $project, array $data): Project
@@ -50,7 +60,9 @@ class ProjectService
             );
         }
 
-        return $this->repo->update($project, $data);
+        $project->update($data);
+
+        return $project->fresh(['user:id,name'])->loadCount('tasks');
     }
 
     public function delete(Project $project): bool
@@ -61,6 +73,6 @@ class ProjectService
             );
         }
 
-        return $this->repo->delete($project);
+        return $project->delete();
     }
 }

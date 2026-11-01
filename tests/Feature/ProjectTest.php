@@ -40,14 +40,13 @@ class ProjectTest extends TestCase
             'Authorization' => 'Bearer ' . $token,
         ])->getJson(route('projects.index'));
 
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'success',
-                'message',
-                'data' => [
-                    '*' => ['id', 'name', 'description', 'created_by']
-                ]
-            ]);
+        $response->assertStatus(200)->assertJsonStructure([
+            'success',
+            'message',
+            'data' => [
+                '*' => ['id', 'name', 'description', 'created_by'],
+            ],
+        ]);
     }
 
     public function test_admin_can_view_any_project_details(): void
@@ -78,8 +77,7 @@ class ProjectTest extends TestCase
             'Authorization' => 'Bearer ' . $token,
         ])->getJson(route('projects.detail', $project->id));
 
-        $response->assertStatus(200)
-            ->assertJsonPath('data.name', 'Project A');
+        $response->assertStatus(200)->assertJsonPath('data.name', 'Project A');
     }
 
     public function test_member_can_view_project_only_if_involved(): void
