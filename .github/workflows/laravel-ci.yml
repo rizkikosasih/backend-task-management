@@ -52,7 +52,7 @@ jobs:
       - name: Create Clean Artifact
         run: |
           mkdir -p artifact
-          cp -R app bootstrap config database public resources routes artisan composer.json composer.lock .env.example artifact/
+          cp -R app bootstrap config database public routes artisan composer.json composer.lock .env.example artifact/
           zip -r build.zip artifact
 
       - name: Upload Artifact
