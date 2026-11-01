@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\User;
@@ -102,7 +104,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test_token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson(route('logout'));
 
         $response->assertStatus(200)->assertJson([
@@ -123,7 +125,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test_token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson(route('me'));
 
         $response->assertStatus(200)->assertJsonStructure([

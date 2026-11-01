@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Helpers\ApiResponse;
@@ -24,12 +26,13 @@ class SocialAuthController extends Controller
     {
         $validProviders = ['google', 'github'];
 
-        if (!in_array($provider, $validProviders)) {
+        if (! in_array($provider, $validProviders)) {
             return ApiResponse::error('Invalid OAuth provider', null, 400);
         }
 
         try {
             $redirectUrl = $this->oauthService->getRedirectUrl($provider);
+
             return ApiResponse::success(['redirect_url' => $redirectUrl]);
         } catch (\Exception $e) {
             return ApiResponse::error($e->getMessage(), null, 500);

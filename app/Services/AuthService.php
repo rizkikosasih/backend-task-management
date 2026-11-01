@@ -1,20 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\OAuthProvider;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class AuthService
 {
-    public function register(array $data)
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{user: User, token: string}
+     */
+    public function register(array $data): array
     {
+        /** @var User $user */
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'name' => (string) $data['name'],
+            'email' => (string) $data['email'],
+            'password' => Hash::make((string) $data['password']),
             'is_oauth_user' => false,
         ]);
 
@@ -28,11 +35,16 @@ class AuthService
         ];
     }
 
-    public function login(array $data)
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{user: User, token: string}
+     */
+    public function login(array $data): array
     {
+        /** @var User|null $user */
         $user = User::where('email', $data['email'])->first();
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check((string) $data['password'], (string) $user->password)) {
             abort(401, 'Invalid credentials');
         }
 
@@ -48,12 +60,8 @@ class AuthService
     }
 
     /**
-     * Handle OAuth2 Login/Register
-     *
-     * LOGIC FOR EMAIL MATCHING:
-     * 1. Check if provider_id and provider match an existing oauth_providers record -> Login.
-     * 2. Else, check if the email exists in users table -> Link provider to user and login.
-     * 3. Else, email & provider are new -> Create a new user and login.
+     * @param  array<string, mixed>  $profileData
+     * @return array<string, mixed>
      */
     public function loginOrRegisterViaOAuth(
         string $provider,
@@ -62,12 +70,12 @@ class AuthService
         string $name,
         array $profileData = []
     ): array {
-        // Step 1: Check if OAuth provider already connected
         $oauthProvider = OAuthProvider::where('provider', $provider)
             ->where('provider_id', $providerId)
             ->first();
 
         if ($oauthProvider) {
+            /** @var User $user */
             $user = $oauthProvider->user;
             $user->update(['last_login_at' => now()]);
             $user->tokens()->delete();
@@ -82,7 +90,7 @@ class AuthService
             ];
         }
 
-        // Step 2: Check if email already exists in our database
+        /** @var User|null $existingUser */
         $existingUser = User::where('email', $email)->first();
 
         if ($existingUser) {
@@ -111,7 +119,7 @@ class AuthService
             ];
         }
 
-        // Step 3: New user & new provider
+        /** @var User $user */
         $user = User::create([
             'name' => $name,
             'email' => $email,

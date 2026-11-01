@@ -1,18 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\TaskStatus;
+use App\Events\TaskAssigned;
 use App\Exceptions\BusinessException;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class TaskService
 {
+    /**
+     * @param  array<string, mixed>  $filters
+     */
     public function getTasks(array $filters): LengthAwarePaginator
     {
         if (Gate::denies('viewAny', Task::class)) {
@@ -22,26 +29,26 @@ class TaskService
         $user = Auth::user();
 
         return Task::query()
-            ->when($user->hasRole('member'), function ($q) use ($user) {
+            ->when($user && $user->hasRole('member'), function ($q) use ($user) {
                 return $q->where('assigned_to', $user->id);
             })
             ->when(
                 $filters['search'] ?? null,
-                fn($q, $search) => $q->where('title', 'like', "%{$search}%"),
+                fn ($q, $search) => $q->where('title', 'like', "%{$search}%"),
             )
             ->when(
                 $filters['project_id'] ?? null,
-                fn($q, $projectId) => $q->where('project_id', $projectId),
+                fn ($q, $projectId) => $q->where('project_id', $projectId),
             )
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->when(
                 $filters['assigned_to'] ?? null,
-                fn($q, $assignedTo) => $q->where('assigned_to', $assignedTo),
+                fn ($q, $assignedTo) => $q->where('assigned_to', $assignedTo),
             )
             ->with(['project:id,name', 'user:id,name'])
             ->orderBy('created_at', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate($filters['per_page'] ?? 10)
+            ->paginate((int) ($filters['per_page'] ?? 10))
             ->withQueryString();
     }
 
@@ -54,6 +61,9 @@ class TaskService
         return $task->load(['user:id,name', 'project:id,name']);
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function create(array $data): Task
     {
         $project = Project::findOrFail($data['project_id']);
@@ -63,14 +73,21 @@ class TaskService
         }
 
         $data['status'] = isset($data['status'])
-            ? TaskStatus::from($data['status'])
+            ? TaskStatus::from((string) $data['status'])
             : TaskStatus::TODO;
 
         $task = Task::create($data);
 
+        if (! empty($data['assigned_to'])) {
+            TaskAssigned::dispatch($task);
+        }
+
         return $task->load(['project:id,name', 'user:id,name']);
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function update(Task $task, array $data): Task
     {
         if (Gate::denies('update', $task)) {
@@ -88,24 +105,28 @@ class TaskService
             throw new AuthorizationException('You are not authorized to update this task status.');
         }
 
-        $newStatus = TaskStatus::from($status);
+        return DB::transaction(function () use ($task, $status): Task {
+            $lockedTask = Task::where('id', $task->id)->lockForUpdate()->firstOrFail();
 
-        if ($task->status->isDone() && !$newStatus->isDone()) {
-            throw new BusinessException(
-                message: 'Invalid Task Transition',
-                errors: [
-                    'status' => 'Done tasks are locked and cannot be reverted to a previous state.',
-                ],
-            );
-        }
+            $newStatus = TaskStatus::from($status);
 
-        if ($task->status === $newStatus) {
-            return $task;
-        }
+            if ($lockedTask->status->isDone() && ! $newStatus->isDone()) {
+                throw new BusinessException(
+                    message: 'Invalid Task Transition',
+                    errors: [
+                        'status' => 'Done tasks are locked and cannot be reverted to a previous state.',
+                    ],
+                );
+            }
 
-        $task->update(['status' => $newStatus]);
+            if ($lockedTask->status === $newStatus) {
+                return $lockedTask;
+            }
 
-        return $task->fresh(['project:id,name', 'user:id,name']);
+            $lockedTask->update(['status' => $newStatus]);
+
+            return $lockedTask->fresh(['project:id,name', 'user:id,name']);
+        });
     }
 
     public function delete(Task $task): bool
@@ -114,6 +135,6 @@ class TaskService
             throw new AuthorizationException('Task removal is restricted to the project owner.');
         }
 
-        return $task->delete();
+        return (bool) $task->delete();
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\Project;
@@ -37,7 +39,7 @@ class ProjectTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson(route('projects.index'));
 
         $response->assertStatus(200)->assertJsonStructure([
@@ -74,7 +76,7 @@ class ProjectTest extends TestCase
         $token = $admin2->createToken('test_token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson(route('projects.detail', $project->id));
 
         $response->assertStatus(200)->assertJsonPath('data.name', 'Project A');
@@ -119,13 +121,13 @@ class ProjectTest extends TestCase
         $token = $member->createToken('test_token')->plainTextToken;
 
         $response1 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson(route('projects.detail', $project->id));
 
         $response1->assertStatus(200);
 
         $response2 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson(route('projects.detail', $otherProject->id));
 
         $response2->assertStatus(403);
@@ -147,7 +149,7 @@ class ProjectTest extends TestCase
 
         $tokenAdmin = $admin->createToken('admin_token')->plainTextToken;
         $responseAdmin = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenAdmin,
+            'Authorization' => 'Bearer '.$tokenAdmin,
         ])->postJson(route('projects.create'), $payload);
 
         $responseAdmin->assertStatus(201);
@@ -169,7 +171,7 @@ class ProjectTest extends TestCase
 
         $tokenMember = $member->createToken('member_token')->plainTextToken;
         $responseMember = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenMember,
+            'Authorization' => 'Bearer '.$tokenMember,
         ])->postJson(route('projects.create'), $payload);
 
         $responseMember->assertStatus(403);
@@ -197,7 +199,7 @@ class ProjectTest extends TestCase
 
         $token1 = $admin1->createToken('token1')->plainTextToken;
         $response1 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token1,
+            'Authorization' => 'Bearer '.$token1,
         ])->putJson(route('projects.update', $project->id), $payload);
 
         $response1->assertStatus(200);
@@ -232,7 +234,7 @@ class ProjectTest extends TestCase
 
         $token2 = $admin2->createToken('token2')->plainTextToken;
         $response2 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token2,
+            'Authorization' => 'Bearer '.$token2,
         ])->putJson(route('projects.update', $project->id), $payload);
 
         $response2->assertStatus(403);
@@ -262,7 +264,7 @@ class ProjectTest extends TestCase
 
         $token2 = $admin2->createToken('token2')->plainTextToken;
         $response2 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token2,
+            'Authorization' => 'Bearer '.$token2,
         ])->deleteJson(route('projects.delete', $project->id));
 
         $response2->assertStatus(403);
@@ -285,7 +287,7 @@ class ProjectTest extends TestCase
 
         $token1 = $admin1->createToken('token1')->plainTextToken;
         $response1 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token1,
+            'Authorization' => 'Bearer '.$token1,
         ])->deleteJson(route('projects.delete', $project->id));
 
         $response1->assertStatus(200);

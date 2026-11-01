@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\OAuthProvider;
+use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
@@ -98,7 +100,7 @@ class SocialAuthControllerTest extends TestCase
                     'token',
                     'is_new_account',
                     'is_new_provider',
-                ]
+                ],
             ])
             ->assertJsonFragment([
                 'is_new_account' => true,
@@ -170,7 +172,7 @@ class SocialAuthControllerTest extends TestCase
         $this->mockSocialite('github', $userData);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson(route('oauth.link', ['provider' => 'github']));
 
         $response->assertStatus(200)
@@ -208,7 +210,7 @@ class SocialAuthControllerTest extends TestCase
         $token = $user->createToken('test_token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson(route('oauth.link', ['provider' => 'google']));
 
         $response->assertStatus(400)
@@ -255,7 +257,7 @@ class SocialAuthControllerTest extends TestCase
         $this->mockSocialite('github', $userData);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $tokenB,
+            'Authorization' => 'Bearer '.$tokenB,
         ])->postJson(route('oauth.link', ['provider' => 'github']));
 
         $response->assertStatus(400)

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Comment;
@@ -48,6 +50,6 @@ class CommentService
             throw new AuthorizationException('You can only delete your own comments.');
         }
 
-        return $comment->delete();
+        return (bool) $comment->delete();
     }
 }

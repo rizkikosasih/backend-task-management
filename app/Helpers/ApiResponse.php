@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Helpers;
 
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\JsonResponse;
 
 class ApiResponse
 {
-    public static function success($data = null, $message = 'Success', $code = 200, $meta = null)
+    public static function success(mixed $data = null, string $message = 'Success', int $code = 200, mixed $meta = null): JsonResponse
     {
         return response()->json(
             [
@@ -21,9 +24,9 @@ class ApiResponse
 
     public static function paginated(
         LengthAwarePaginator $paginator,
-        $resource,
-        $message = 'Data retrieved successfully',
-    ) {
+        string $resource,
+        string $message = 'Data retrieved successfully',
+    ): JsonResponse {
         return response()->json([
             'success' => true,
             'message' => $message,
@@ -38,7 +41,7 @@ class ApiResponse
         ]);
     }
 
-    public static function error($message = 'Error', $errors = null, $code = 400)
+    public static function error(string $message = 'Error', mixed $errors = null, int $code = 400): JsonResponse
     {
         return response()->json(
             [
