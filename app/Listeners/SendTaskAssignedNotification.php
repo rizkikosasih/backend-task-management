@@ -21,4 +21,3 @@ class SendTaskAssignedNotification implements ShouldQueue
         ]);
     }
 }
-

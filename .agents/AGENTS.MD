@@ -1,4 +1,4 @@
-# AGENTS (Rule Workspace) untuk Repo: laravel-task-api
+# AGENTS (Rule Workspace) untuk Repo: backend-task-management
 
 Tujuan: menetapkan aturan agar agen (automated bots / copilots / CI agents) bertindak aman dan konsisten saat membuat perubahan terkait fitur OAuth2.
 

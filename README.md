@@ -14,8 +14,9 @@ Sistem manajemen tugas (Task Management) berbasis RESTful API yang dibangun deng
 - **Authorization**: Spatie Laravel Permission
 - **Architecture**: Service-Repository Pattern
 - Dev Tools:
-  - Prettier: Untuk konsistensi formatting kode (PHP & Blade).
-  - Laravel IDE Helper: Untuk autocompletion & static analysis yang lebih baik.
+  - Laravel Pint: Standar formatting kode dan strict typing PHP.
+  - Larastan (PHPStan): Static analysis level 5.
+  - Scramble: OpenAPI 3.0 documentation generator (/docs/api).
 
 ---
 
@@ -24,13 +25,11 @@ Sistem manajemen tugas (Task Management) berbasis RESTful API yang dibangun deng
 - Clone & Dependencies
 
 ```bash
-git clone https://github.com/rizkikosasih/laravel-task-api.git nama-folder
+git clone https://github.com/rizkikosasih/backend-task-management.git nama-folder
 
 cd nama-folder
 
-composer install
-
-npm install --save-dev prettier @prettier/plugin-php prettier-plugin-blade
+composer run setup:local
 ```
 
 - Environment & Keys
