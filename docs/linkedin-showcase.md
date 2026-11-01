@@ -8,7 +8,7 @@ Dokumen ini berisi materi siap pakai untuk publikasi portofolio atau postingan L
 
 - **Judul Proyek**: Task Management API — RESTful API dengan RBAC & ABAC (Laravel 12)
 - **Kategori Proyek**: Backend Development / API Design
-- **URL Repositori**: `https://github.com/rizkikosasih/laravel-task-api`
+- **URL Repositori**: `https://github.com/rizkikosasih/backend-task-management`
 - **Keahlian Terkait (Skills)**:
   - Laravel Framework (v12)
   - RESTful API Design

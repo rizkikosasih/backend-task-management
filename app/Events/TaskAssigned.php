@@ -15,4 +15,3 @@ class TaskAssigned
 
     public function __construct(public Task $task) {}
 }
-
