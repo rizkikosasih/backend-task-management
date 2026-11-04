@@ -8,6 +8,7 @@ use App\Helpers\ApiResponse;
 use App\Models\OAuthProvider;
 use App\Services\AuthService;
 use App\Services\OAuthService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -26,7 +27,7 @@ class SocialAuthController extends Controller
     {
         $validProviders = ['google', 'github'];
 
-        if (! in_array($provider, $validProviders)) {
+        if (!in_array($provider, $validProviders)) {
             return ApiResponse::error('Invalid OAuth provider', null, 400);
         }
 
@@ -34,7 +35,7 @@ class SocialAuthController extends Controller
             $redirectUrl = $this->oauthService->getRedirectUrl($provider);
 
             return ApiResponse::success(['redirect_url' => $redirectUrl]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), null, 500);
         }
     }
@@ -86,7 +87,7 @@ class SocialAuthController extends Controller
                 $message,
                 $statusCode,
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), null, 500);
         }
     }
@@ -145,7 +146,7 @@ class SocialAuthController extends Controller
                 ['user' => $user],
                 "{$provider} linked successfully",
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), null, 500);
         }
     }

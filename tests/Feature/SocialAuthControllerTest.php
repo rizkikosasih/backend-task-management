@@ -9,6 +9,9 @@ use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
+use Mockery;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Tests\TestCase;
 
 class SocialAuthControllerTest extends TestCase
@@ -26,7 +29,7 @@ class SocialAuthControllerTest extends TestCase
      */
     protected function mockSocialite(string $provider, array $userData = []): void
     {
-        $abstractUser = \Mockery::mock(\Laravel\Socialite\Two\User::class);
+        $abstractUser = Mockery::mock(\Laravel\Socialite\Two\User::class);
         $abstractUser->shouldReceive('getId')->andReturn($userData['id'] ?? '123456');
         $abstractUser->shouldReceive('getEmail')->andReturn($userData['email'] ?? 'mock@example.com');
         $abstractUser->shouldReceive('getName')->andReturn($userData['name'] ?? 'Mock User');
@@ -34,12 +37,12 @@ class SocialAuthControllerTest extends TestCase
         $abstractUser->shouldReceive('getNickname')->andReturn($userData['nickname'] ?? 'mockuser');
         $abstractUser->shouldReceive('getRaw')->andReturn($userData['raw'] ?? []);
 
-        $providerMock = \Mockery::mock(\Laravel\Socialite\Two\AbstractProvider::class);
+        $providerMock = Mockery::mock(AbstractProvider::class);
         $providerMock->shouldReceive('stateless')->andReturnSelf();
         $providerMock->shouldReceive('user')->andReturn($abstractUser);
 
         // Mock redirect response
-        $redirectMock = \Mockery::mock(\Symfony\Component\HttpFoundation\RedirectResponse::class);
+        $redirectMock = Mockery::mock(RedirectResponse::class);
         $redirectMock->shouldReceive('getTargetUrl')
             ->andReturn("https://accounts.google.com/o/oauth2/v2/auth?client_id=google-id&redirect_uri=http://localhost:8000/api/oauth/{$provider}/callback");
         $providerMock->shouldReceive('redirect')->andReturn($redirectMock);
