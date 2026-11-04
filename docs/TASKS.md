@@ -1,6 +1,6 @@
 # Project Task Backlog (TASKS)
 
-Hierarki Standar Pelacakan Tugas Proyek: Priority -> Sub-Poin -> Item Pekerjaan.  
+Hierarki Standar Pelacakan Tugas Proyek: Priority -> Sub-Poin -> Item Pekerjaan.
 
 ---
 
@@ -8,15 +8,15 @@ Hierarki Standar Pelacakan Tugas Proyek: Priority -> Sub-Poin -> Item Pekerjaan.
 
 ### 1. Keamanan & Pengendalian Akses Jaringan
 
-- [ ] **Rate Limiting Dinamis per Pengguna:**
-  Menerapkan pembatasan frekuensi permintaan berbasis ID pengguna terotentikasi pada seluruh rute mutasi API guna mencegah serangan brute-force dan penyalahgunaan sumber daya server.
-- [ ] **Validasi Token Penyedia OAuth Terpusat:**
-  Menambahkan verifikasi integritas token akses dari penyedia pihak ketiga sebelum menuntaskan proses penautan akun lokal.
+- [ ] **Rate Limiting Dinamis Berbasis Redis per Identitas Pengguna:**
+  Menerapkan pembatasan frekuensi mutasi data API memanfaatkan algoritma token bucket Redis berbasis User ID terotentikasi, dengan mekanisme fallback ke driver database cache.
+- [ ] **Validasi Integritas Token OAuth Terpusat:**
+  Menambahkan verifikasi payload dan status aktif token otentikasi dari penyedia eksternal (Google/GitHub) sebelum finalisasi penautan akun lokal.
 
-### 2. Notifikasi & Komunikasi Domain
+### 2. Notifikasi Domain & Infrastruktur Asinkron
 
-- [ ] **Penyedia Notifikasi Multi-Kanal:**
-  Mengintegrasikan pengiriman notifikasi penugasan tugas melalui email dan kanal komunikasi eksternal memanfaatkan listener `SendTaskAssignedNotification`.
+- [ ] **Worker Antrean Multi-Kanal Berkinerja Tinggi:**
+  Mengarahkan listener SendTaskAssignedNotification ke antrean worker asinkron berbasis Redis dengan integrasi kelas Mailable dan logging kegagalan pengiriman.
 
 ---
 
@@ -24,13 +24,13 @@ Hierarki Standar Pelacakan Tugas Proyek: Priority -> Sub-Poin -> Item Pekerjaan.
 
 ### 1. Audit Trail & Log Transaksi
 
-- [ ] **Pencatatan Riwayat Perubahan Entitas:**
-  Mencatat riwayat modifikasi pada tabel tugas dan proyek ke dalam tabel log audit khusus untuk kebutuhan visibilitas kepatuhan data.
+- [ ] **Skema Riwayat Perubahan Entitas Asinkron:**
+  Membangun tabel log audit terisolasi yang dipicu melalui domain event asinkron guna merekam riwayat perubahan tugas tanpa menambah durasi penguncian baris (lockForUpdate).
 
-### 2. Pelaporan & Ekspor Data
+### 2. Pelaporan & Transformasi Data
 
-- [ ] **Ekspor Ringkasan Proyek:**
-  Menyediakan endpoint pembuatan berkas laporan berformat CSV yang merangkum metrik penyelesaian tugas di bawah proyek spesifik.
+- [ ] **Generator Ekspor CSV Streaming:**
+  Menyediakan endpoint streaming pembuatan berkas CSV ringkasan metrik proyek untuk mencegah lonjakan alokasi memori saat memproses dataset besar.
 
 ---
 
@@ -38,28 +38,28 @@ Hierarki Standar Pelacakan Tugas Proyek: Priority -> Sub-Poin -> Item Pekerjaan.
 
 ### 1. Manajemen Logging & Observabilitas
 
-- [ ] **Strukturisasi Log JSON Monolog & Correlation ID:**
-  Mengonfigurasi Monolog agar mencetak log berformat JSON terstruktur dengan injeksi Correlation ID (X-Request-ID) unik pada setiap daur hidup request untuk penelusuran terdistribusi.
-- [ ] **Konfigurasi Kanal Log Harian & Kontekstual Eksepsi:**
-  Menetapkan rotasi berkas log harian dengan retensi otomatis dan penangkapan payload eksepsi tanpa membocorkan data sensitif (sanitisasi kredensial).
+- [ ] **Middleware Correlation ID & Monolog JSON Formatter:**
+  Menginjeksi header X-Request-ID ke konteks log terstruktur JSON Monolog dan seluruh amplop respon HTTP untuk penelusuran transaksi terdistribusi.
+- [ ] **Filter Sanitisasi Log Kontekstual:**
+  Mengonfigurasi penanganan eksepsi global agar menyaring kredensial sensitif dari payload request sebelum dicatat pada berkas rotasi harian.
 
-### 2. Strategi Caching & Kinerja Layanan
+### 2. Strategi Caching & Concurrency Control
 
-- [ ] **Penerapan Caching Tagged Redis pada Kueri Proyek dan Tugas:**
-  Mengimplementasikan mekanisme cache berlabel (tagged cache) untuk endpoint pembacaan proyek dan tugas yang terinvaliasi otomatis saat terjadi mutasi data.
-- [ ] **Atomic Locks & Perlindungan Cache Stampede:**
-  Menerapkan Redis atomic locks pada kalkulasi agregasi metrik tugas guna mencegah fenomena penyerbuan basis data saat cache kedaluwarsa secara serentak.
+- [ ] **Tagged Cache Proyek & Tugas dengan Fallback Guard:**
+  Mengimplementasikan mekanisme cache berlabel pada kueri baca proyek dan tugas yang terinvaliasi otomatis saat terjadi mutasi data, disertai penanganan isolasi driver non-Redis.
+- [ ] **Distributed Lock Metrik Tugas:**
+  Menerapkan Redis atomic locks dengan batasan TTL ketat pada kalkulasi agregasi metrik tugas guna mengeliminasi kondisi cache stampede.
 
-### 3. Standarisasi Basis Data & Indeks Performa
+### 3. Skema Basis Data & Optimasi Kueri
 
-- [ ] **Penyesuaian Indeks Komposit & Evaluasi Execution Plan:**
-  Menambahkan indeks B-Tree komposit pada kolom frekuensi tinggi (seperti project_id + status pada tabel tasks) serta menjalankan analisis EXPLAIN guna mengeliminasi full table scan.
-- [ ] **Penegakan Standar Tipe Kolom & Integritas Referensial:**
-  Menstandarkan tipe data kolom status dan pengenal entitas serta memperketat batasan Foreign Key onDelete cascade/restrict sesuai batasan domain.
+- [ ] **Indeks B-Tree Komposit Filter Tugas:**
+  Menambahkan migrasi indeks komposit pada pasangan kolom (project_id, status) dan (assigned_to, status) untuk mengeliminasi full table scan pada kueri filter task list.
+- [ ] **Penegakan Integritas Tipe Kolom Status:**
+  Mengubah tipe kolom status dari VARCHAR(255) bebas menjadi tipe data terbatas yang tervalidasi serta memperketat batasan Foreign Key onDelete restrict/cascade.
 
-### 4. Peningkatan Kapabilitas Teknis & Kesiapan Produksi
+### 4. Kesiapan Produksi & Standarisasi Respon
 
-- [ ] **Endpoint Health Probes Standar:**
-  Menyediakan endpoint pemantauan status liveness dan readiness (/api/health/live dan /api/health/ready) yang memeriksa koneksi basis data dan ketersediaan penyimpanan.
-- [ ] **Standarisasi Header Metadata Paginasi:**
+- [ ] **Endpoint Health Check Probe Terpadu:**
+  Menyediakan rute pemantauan /api/health/live dan /api/health/ready yang memverifikasi kesiapan koneksi basis data utama dan kluster Redis.
+- [ ] **Header Metadata Paginasi:**
   Menyematkan informasi paginasi terpadu pada header HTTP respon (X-Total-Count, X-Page, X-Per-Page) untuk melengkapi amplop respon JSON.
