@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+SH_SCRIPT="./.githooks/sync-local.sh"
+
+if [ -f "$SH_SCRIPT" ]; then
+  sh "$SH_SCRIPT" "ORIG_HEAD"
+fi

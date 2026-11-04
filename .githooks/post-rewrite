@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+SH_SCRIPT="./.githooks/sync-local.sh"
+
+if [ "$1" = "rebase" ] && [ -f "$SH_SCRIPT" ]; then
+  sh "$SH_SCRIPT" "HEAD@{1}"
+fi
