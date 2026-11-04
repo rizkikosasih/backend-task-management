@@ -65,13 +65,15 @@
     "lint:fix": "vendor/bin/pint",
     "analyse": "vendor/bin/phpstan analyse",
     "test": "vendor/bin/phpunit",
+    "setup:hooks": "git config core.hooksPath .githooks",
     "setup": [
       "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
       "@php artisan key:generate --ansi",
       "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
       "@php artisan migrate --force --ansi",
       "@php artisan storage:link --ansi",
-      "@php artisan optimize --ansi"
+      "@php artisan optimize --ansi",
+      "@composer setup:hooks"
     ],
     "setup:local": [
       "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
@@ -79,7 +81,8 @@
       "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
       "@php artisan migrate:fresh --seed --ansi",
       "@php artisan storage:link --ansi",
-      "@php artisan optimize:clear --ansi"
+      "@php artisan optimize:clear --ansi",
+      "@composer setup:hooks"
     ],
     "deploy": [
       "@php artisan down",

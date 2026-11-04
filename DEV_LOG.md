@@ -10,6 +10,10 @@ Format: Tanggal - Pengembang - Ringkasan Aktivitas Teknis
 ### Penyelarasan Backlog Kesiapan Infrastruktur dan Arsitektur
 - Menyusun ekspansi register backlog pada `docs/TASKS.md` mencakup kesiapan infrastruktur Redis, rate limiting dinamis, audit trail terisolasi, dan observabilitas Monolog terstruktur.
 
+### Otomasi Git Hook Pasca-Tarik Lintas Sistem Operasi
+- Menerapkan skrip sinkronisasi dinamis `.githooks/sync-local.sh` lintas sistem operasi untuk memeriksa mutasi manifes dependensi Composer, skema migrasi, dan konfigurasi.
+- Mengintegrasikan hook `post-merge` dan `post-rewrite` serta menambahkan skrip `setup:hooks` pada `composer.json` untuk pendaftaran otomatis konfigurasi `core.hooksPath`.
+
 ---
 
 ## 2026-11-01
