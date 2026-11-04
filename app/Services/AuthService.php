@@ -44,7 +44,7 @@ class AuthService
         /** @var User|null $user */
         $user = User::where('email', $data['email'])->first();
 
-        if (! $user || ! Hash::check((string) $data['password'], (string) $user->password)) {
+        if (!$user || !Hash::check((string) $data['password'], (string) $user->password)) {
             abort(401, 'Invalid credentials');
         }
 

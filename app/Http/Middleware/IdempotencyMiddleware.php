@@ -15,7 +15,7 @@ class IdempotencyMiddleware
     {
         $idempotencyKey = $request->header('Idempotency-Key');
 
-        if (! is_string($idempotencyKey) || $idempotencyKey === '') {
+        if (!is_string($idempotencyKey) || $idempotencyKey === '') {
             return $next($request);
         }
 

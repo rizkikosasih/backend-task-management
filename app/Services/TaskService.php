@@ -78,7 +78,7 @@ class TaskService
 
         $task = Task::create($data);
 
-        if (! empty($data['assigned_to'])) {
+        if (!empty($data['assigned_to'])) {
             TaskAssigned::dispatch($task);
         }
 
@@ -110,7 +110,7 @@ class TaskService
 
             $newStatus = TaskStatus::from($status);
 
-            if ($lockedTask->status->isDone() && ! $newStatus->isDone()) {
+            if ($lockedTask->status->isDone() && !$newStatus->isDone()) {
                 throw new BusinessException(
                     message: 'Invalid Task Transition',
                     errors: [

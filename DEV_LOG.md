@@ -14,6 +14,10 @@ Format: Tanggal - Pengembang - Ringkasan Aktivitas Teknis
 - Menerapkan skrip sinkronisasi dinamis `.githooks/sync-local.sh` lintas sistem operasi untuk memeriksa mutasi manifes dependensi Composer, skema migrasi, dan konfigurasi.
 - Mengintegrasikan hook `post-merge` dan `post-rewrite` serta menambahkan skrip `setup:hooks` pada `composer.json` untuk pendaftaran otomatis konfigurasi `core.hooksPath`.
 
+### Penegakan Aturan Ekstensi Standar Gaya Kode Pint
+- Menerapkan aturan linter tambahan pada `pint.json` mencakup impor namespace global, penataan urutan impor alfabetis, dan pengetikan tipe data tegas.
+- Menyelaraskan 14 berkas yang melanggar aturan format baru via `vendor/bin/pint` serta memverifikasi kelulusan penuh pengujian PHPUnit dan Larastan.
+
 ---
 
 ## 2026-11-01
