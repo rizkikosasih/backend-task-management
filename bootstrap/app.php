@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 use App\Exceptions\ApiExceptionTransformer;
 use App\Http\Middleware\IdempotencyMiddleware;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -25,6 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'idempotent' => IdempotencyMiddleware::class,
+        ]);
+
+        $middleware->priority([
+            Authenticate::class,
+            ThrottleRequests::class,
+            ThrottleRequestsWithRedis::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

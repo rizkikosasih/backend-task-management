@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessException;
 use App\Helpers\ApiResponse;
 use App\Models\OAuthProvider;
 use App\Services\AuthService;
 use App\Services\OAuthService;
+use App\Services\OAuthTokenValidatorService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -17,12 +19,9 @@ class SocialAuthController extends Controller
     public function __construct(
         protected OAuthService $oauthService,
         protected AuthService $authService,
+        protected OAuthTokenValidatorService $tokenValidator,
     ) {}
 
-    /**
-     * Redirect to OAuth provider
-     * GET /api/oauth/{provider}/redirect
-     */
     public function redirect(string $provider)
     {
         $validProviders = ['google', 'github'];
@@ -43,14 +42,9 @@ class SocialAuthController extends Controller
         }
     }
 
-    /**
-     * Handle OAuth callback
-     * GET /api/oauth/{provider}/callback?code=...&state=...
-     */
     public function callback(string $provider, Request $request)
     {
         try {
-            // Step 1: Get user data from OAuth provider
             $oauthData = $this->oauthService->handleCallback($provider);
 
             $email = $oauthData['email'];
@@ -59,7 +53,7 @@ class SocialAuthController extends Controller
                     return ApiResponse::error(
                         'Alamat email publik tidak tersedia dari penyedia OAuth.',
                         ['email' => ['Alamat email publik diperlukan untuk autentikasi.']],
-                        422
+                        422,
                     );
                 }
 
@@ -68,7 +62,6 @@ class SocialAuthController extends Controller
                 return redirect()->to("{$frontendUrl}/login?error=oauth_email_missing&provider={$provider}");
             }
 
-            // Step 2: Login or register user
             $result = $this->authService->loginOrRegisterViaOAuth(
                 provider: $oauthData['provider'],
                 providerId: $oauthData['provider_id'],
@@ -77,7 +70,6 @@ class SocialAuthController extends Controller
                 profileData: $oauthData['profile_data'],
             );
 
-            // Step 3: Log linking event if a new provider was linked to an existing account
             if ($result['is_new_provider']) {
                 Log::info('Account linked via OAuth callback', [
                     'user_id' => $result['user']->id,
@@ -111,6 +103,14 @@ class SocialAuthController extends Controller
                 $message,
                 $statusCode,
             );
+        } catch (BusinessException $e) {
+            if (!$request->wantsJson()) {
+                $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5101'), '/');
+
+                return redirect()->to("{$frontendUrl}/login?error=oauth_failed");
+            }
+
+            return ApiResponse::error($e->getMessage(), $e->getErrors(), $e->getCode() ?: 422);
         } catch (Exception $e) {
             if (!$request->wantsJson()) {
                 $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5101'), '/');
@@ -122,10 +122,6 @@ class SocialAuthController extends Controller
         }
     }
 
-    /**
-     * Link additional OAuth provider to existing account
-     * POST /api/oauth/{provider}/link
-     */
     public function link(string $provider, Request $request)
     {
         $user = $request->user();
@@ -134,14 +130,18 @@ class SocialAuthController extends Controller
             return ApiResponse::error(
                 "Account already linked to {$provider}",
                 null,
-                400
+                400,
             );
         }
 
         try {
-            $oauthData = $this->oauthService->handleCallback($provider);
+            $token = $request->input('token') ?? $request->input('access_token');
+            if (is_string($token) && trim($token) !== '') {
+                $oauthData = $this->tokenValidator->validateToken($provider, trim($token));
+            } else {
+                $oauthData = $this->oauthService->handleCallback($provider);
+            }
 
-            // Check if this provider_id is already linked to another user
             $existingLink = OAuthProvider::where('provider', $provider)
                 ->where('provider_id', $oauthData['provider_id'])
                 ->first();
@@ -150,11 +150,10 @@ class SocialAuthController extends Controller
                 return ApiResponse::error(
                     'This account is already linked to another user',
                     null,
-                    400
+                    400,
                 );
             }
 
-            // Link provider
             $user->oauthProviders()->create([
                 'provider' => $oauthData['provider'],
                 'provider_id' => $oauthData['provider_id'],
@@ -176,6 +175,8 @@ class SocialAuthController extends Controller
                 ['user' => $user],
                 "{$provider} linked successfully",
             );
+        } catch (BusinessException $e) {
+            return ApiResponse::error($e->getMessage(), $e->getErrors(), $e->getCode() ?: 422);
         } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), null, 500);
         }
