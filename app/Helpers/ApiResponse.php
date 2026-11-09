@@ -41,7 +41,7 @@ class ApiResponse
         ]);
     }
 
-    public static function error(string $message = 'Error', mixed $errors = null, int $code = 400): JsonResponse
+    public static function error(string $message = 'Error', mixed $errors = null, int $code = 400, array $headers = []): JsonResponse
     {
         return response()->json(
             [
@@ -50,6 +50,7 @@ class ApiResponse
                 'errors' => $errors,
             ],
             $code,
+            $headers,
         );
     }
 }
