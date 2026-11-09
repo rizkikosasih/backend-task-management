@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Task Management'),
 
     /*
     |--------------------------------------------------------------------------
@@ -54,6 +54,8 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5101'),
 
     /*
     |--------------------------------------------------------------------------

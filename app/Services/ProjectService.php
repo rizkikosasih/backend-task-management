@@ -21,7 +21,14 @@ class ProjectService
             throw new AuthorizationException('You do not have access to any projects.');
         }
 
+        $user = Auth::user();
+
         return Project::query()
+            ->when($user && $user->hasRole('member') && !$user->hasRole('admin'), function ($q) use ($user) {
+                return $q->whereHas('tasks', function ($t) use ($user) {
+                    $t->where('assigned_to', $user->id);
+                });
+            })
             ->when(
                 $filters['search'] ?? null,
                 fn ($q, $search) => $q->where('name', 'like', "%{$search}%"),

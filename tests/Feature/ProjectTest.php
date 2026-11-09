@@ -292,4 +292,52 @@ class ProjectTest extends TestCase
 
         $response1->assertStatus(200);
     }
+
+    public function test_member_only_lists_projects_with_assigned_tasks(): void
+    {
+        $admin = User::create([
+            'name' => 'Project Owner Admin',
+            'email' => 'owner-admin@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+        $admin->assignRole('admin');
+
+        $member = User::create([
+            'name' => 'Assigned Member',
+            'email' => 'assigned-member@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+        $member->assignRole('member');
+
+        $projectWithTask = Project::create([
+            'name' => 'Project With Member Task',
+            'description' => 'Project that member is involved in',
+            'created_by' => $admin->id,
+        ]);
+
+        Task::create([
+            'project_id' => $projectWithTask->id,
+            'title' => 'Assigned Task',
+            'status' => 'todo',
+            'assigned_to' => $member->id,
+        ]);
+
+        $projectWithoutTask = Project::create([
+            'name' => 'Secret Project Without Member',
+            'description' => 'Project member is not involved in',
+            'created_by' => $admin->id,
+        ]);
+
+        $token = $member->createToken('member_token')->plainTextToken;
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer '.$token,
+        ])->getJson(route('projects.index'));
+
+        $response->assertStatus(200);
+        $projectIds = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertContains($projectWithTask->id, $projectIds);
+        $this->assertNotContains($projectWithoutTask->id, $projectIds);
+    }
 }
