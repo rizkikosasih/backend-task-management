@@ -34,7 +34,10 @@ class SocialAuthController extends Controller
         try {
             $redirectUrl = $this->oauthService->getRedirectUrl($provider);
 
-            return ApiResponse::success(['redirect_url' => $redirectUrl]);
+            return ApiResponse::success([
+                'redirect_url' => $redirectUrl,
+                'url' => $redirectUrl,
+            ]);
         } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), null, 500);
         }
@@ -50,12 +53,27 @@ class SocialAuthController extends Controller
             // Step 1: Get user data from OAuth provider
             $oauthData = $this->oauthService->handleCallback($provider);
 
+            $email = $oauthData['email'];
+            if (empty($email)) {
+                if ($request->wantsJson()) {
+                    return ApiResponse::error(
+                        'Alamat email publik tidak tersedia dari penyedia OAuth.',
+                        ['email' => ['Alamat email publik diperlukan untuk autentikasi.']],
+                        422
+                    );
+                }
+
+                $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5101'), '/');
+
+                return redirect()->to("{$frontendUrl}/login?error=oauth_email_missing&provider={$provider}");
+            }
+
             // Step 2: Login or register user
             $result = $this->authService->loginOrRegisterViaOAuth(
                 provider: $oauthData['provider'],
                 providerId: $oauthData['provider_id'],
-                email: $oauthData['email'],
-                name: $oauthData['name'],
+                email: (string) $email,
+                name: $oauthData['name'] ?? 'Pengguna OAuth',
                 profileData: $oauthData['profile_data'],
             );
 
@@ -68,6 +86,12 @@ class SocialAuthController extends Controller
                     'ip' => $request->ip(),
                     'timestamp' => now()->toDateTimeString(),
                 ]);
+            }
+
+            if (!$request->wantsJson()) {
+                $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5101'), '/');
+
+                return redirect()->to("{$frontendUrl}/oauth/callback?token={$result['token']}");
             }
 
             $statusCode = $result['is_new_account'] ? 201 : 200;
@@ -88,6 +112,12 @@ class SocialAuthController extends Controller
                 $statusCode,
             );
         } catch (Exception $e) {
+            if (!$request->wantsJson()) {
+                $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5101'), '/');
+
+                return redirect()->to("{$frontendUrl}/login?error=oauth_failed");
+            }
+
             return ApiResponse::error($e->getMessage(), null, 500);
         }
     }

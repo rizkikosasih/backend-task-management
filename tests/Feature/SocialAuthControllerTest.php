@@ -31,7 +31,7 @@ class SocialAuthControllerTest extends TestCase
     {
         $abstractUser = Mockery::mock(\Laravel\Socialite\Two\User::class);
         $abstractUser->shouldReceive('getId')->andReturn($userData['id'] ?? '123456');
-        $abstractUser->shouldReceive('getEmail')->andReturn($userData['email'] ?? 'mock@example.com');
+        $abstractUser->shouldReceive('getEmail')->andReturn(array_key_exists('email', $userData) ? $userData['email'] : 'mock@example.com');
         $abstractUser->shouldReceive('getName')->andReturn($userData['name'] ?? 'Mock User');
         $abstractUser->shouldReceive('getAvatar')->andReturn($userData['avatar'] ?? 'https://avatar.url');
         $abstractUser->shouldReceive('getNickname')->andReturn($userData['nickname'] ?? 'mockuser');
@@ -267,6 +267,54 @@ class SocialAuthControllerTest extends TestCase
             ->assertJsonFragment([
                 'success' => false,
                 'message' => 'This account is already linked to another user',
+            ]);
+    }
+
+    public function test_oauth_callback_browser_request_redirects_to_frontend_callback(): void
+    {
+        $userData = [
+            'id' => 'oauth-browser-123',
+            'email' => 'browser@example.com',
+            'name' => 'Browser User',
+        ];
+        $this->mockSocialite('google', $userData);
+
+        $response = $this->get(route('oauth.callback', ['provider' => 'google', 'code' => 'mock-code']));
+
+        $response->assertStatus(302);
+        $this->assertStringContainsString('/oauth/callback?token=', (string) $response->headers->get('Location'));
+    }
+
+    public function test_oauth_callback_with_missing_email_redirects_browser_to_login_error(): void
+    {
+        $userData = [
+            'id' => 'oauth-no-email-456',
+            'email' => null,
+            'name' => 'No Email User',
+        ];
+        $this->mockSocialite('github', $userData);
+
+        $response = $this->get(route('oauth.callback', ['provider' => 'github', 'code' => 'mock-code']));
+
+        $response->assertStatus(302);
+        $this->assertStringContainsString('/login?error=oauth_email_missing&provider=github', (string) $response->headers->get('Location'));
+    }
+
+    public function test_oauth_callback_with_missing_email_returns_json_error_for_api_client(): void
+    {
+        $userData = [
+            'id' => 'oauth-no-email-789',
+            'email' => null,
+            'name' => 'API No Email User',
+        ];
+        $this->mockSocialite('github', $userData);
+
+        $response = $this->getJson(route('oauth.callback', ['provider' => 'github', 'code' => 'mock-code']));
+
+        $response->assertStatus(422)
+            ->assertJsonFragment([
+                'success' => false,
+                'message' => 'Alamat email publik tidak tersedia dari penyedia OAuth.',
             ]);
     }
 }

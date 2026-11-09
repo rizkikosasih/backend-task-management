@@ -13,7 +13,7 @@ class IdempotencyMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $idempotencyKey = $request->header('Idempotency-Key');
+        $idempotencyKey = $request->header('X-Idempotency-Key') ?? $request->header('Idempotency-Key');
 
         if (!is_string($idempotencyKey) || $idempotencyKey === '') {
             return $next($request);
