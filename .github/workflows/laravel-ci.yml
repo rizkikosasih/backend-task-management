@@ -3,24 +3,20 @@ name: Laravel CI
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - '.editorconfig'
+      - '.gitattributes'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   tests:
     runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: testing
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
 
     steps:
       - uses: actions/checkout@v4
@@ -29,34 +25,34 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, dom, curl, libxml, mysql, sqlite3
+          extensions: mbstring, dom, curl, libxml, sqlite3
           coverage: none
+          tools: composer:v2
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Prepare Laravel
+      - name: Verify Code Style (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Static Analysis (PHPStan)
+        run: vendor/bin/phpstan analyse
+
+      - name: Prepare Environment
         run: |
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run Pint Code Style Verification
-        run: vendor/bin/pint --test
-
-      - name: Run PHPStan Static Analysis
-        run: vendor/bin/phpstan analyse
-
-      - name: Execute Tests via PHPUnit
+      - name: Run Test Suite (PHPUnit)
         run: vendor/bin/phpunit
-
-      - name: Create Clean Artifact
-        run: |
-          mkdir -p artifact
-          cp -R app bootstrap config database public routes artisan composer.json composer.lock .env.example artifact/
-          zip -r build.zip artifact
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: laravel-build
-          path: build.zip
